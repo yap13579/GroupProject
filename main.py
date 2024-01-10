@@ -100,7 +100,10 @@ predictions_new = model.predict(X_new_normalized)
 # Reverse normalization for predictions
 predictions_new = scaler.inverse_transform(predictions_new.reshape(-1, 1))
 y_new_orig = scaler.inverse_transform(y_new_normalized)
-
+print('y original')
+print(y_new_orig)
+print('y predicted')
+print(predictions_new[:-1])
 # Calculate R-squared Score and Mean Squared Error for the new predictions
 r2_new = r2_score(y_new_orig, predictions_new[:-1])
 mse_new = mean_squared_error(y_new_orig, predictions_new[:-1])
@@ -111,13 +114,12 @@ lastdate=new_data.index[-1]
 newdate=lastdate+pd.DateOffset(days=1)
 newrow=pd.DataFrame(index=[newdate],columns=new_data.columns)
 new_data=pd.concat([new_data,newrow])
+
 # Plotting predicted values for the new data
-print(new_data)
-print(predictions_new)
 plt.figure(figsize=(12, 6))
-plt.plot(new_data.iloc[:-1].index, new_data[['Target']][:-1], label='Actual Prices', color='green')
-plt.plot(new_data.iloc[:-1].index, predictions_new, label='Predicted Prices', color='red')
-#plt.plot(new_data.tail(1).index, predictions_new[-1:], label='Future Prices', color='blue')
+plt.plot(new_data.iloc[1:-1].index, new_data[['Close']][1:-1], label='Actual Prices', color='green')
+plt.plot(new_data.iloc[1:-1].index, predictions_new[:-1], label='Predicted Prices', color='red')
+plt.plot(new_data.tail(2).index, predictions_new[-2:], label='Future Prices', color='blue')
 plt.title('Actual vs Predicted Stock Prices for New Data')
 plt.xlabel('Date')
 plt.ylabel('Stock Prices')
