@@ -9,6 +9,7 @@ from sklearn.neural_network import MLPRegressor
 from sklearn.metrics import r2_score, mean_squared_error
 import os 
 
+
 os.system('cls')
 # Fetch historical stock data
 company = '1155.KL'
@@ -74,21 +75,19 @@ plt.ylabel('Stock Prices')
 plt.legend()
 plt.show()
 
-start = date.datetime(2023, 12, 1)
-end = date.datetime(2024,1,1)
-#end = date.datetime.today()
+start = date.datetime(2024, 1, 1)
+end = date.datetime.today()
 # Read Stock Price Data 
 new_data = yf.download(company, start, end)
 
 # Feature Engineering
 new_data['Target'] = new_data['Close'].shift(-1)  # Predicting the next day's Close price
 
-# Drop rows with NaN values
-new_data.dropna(inplace=True)
-
+# Handle NaN values
+new_data.fillna(method='ffill', inplace=True)
 # Features and target variable
 X_new = new_data[['Open', 'High', 'Low', 'Close', 'Volume']]  # You can include more features if needed
-y_new = new_data['Target']
+y_new = new_data[['Target']][:-1]
 
 # Normalizing the new data
 scaler = MinMaxScaler()
@@ -103,16 +102,22 @@ predictions_new = scaler.inverse_transform(predictions_new.reshape(-1, 1))
 y_new_orig = scaler.inverse_transform(y_new_normalized)
 
 # Calculate R-squared Score and Mean Squared Error for the new predictions
-r2_new = r2_score(y_new_orig, predictions_new)
-mse_new = mean_squared_error(y_new_orig, predictions_new)
+r2_new = r2_score(y_new_orig, predictions_new[:-1])
+mse_new = mean_squared_error(y_new_orig, predictions_new[:-1])
 
 print(f"R-squared Score for new data: {r2_new}")
 print(f"Mean Squared Error for new data: {mse_new}")
-
+lastdate=new_data.index[-1]
+newdate=lastdate+pd.DateOffset(days=1)
+newrow=pd.DataFrame(index=[newdate],columns=new_data.columns)
+new_data=pd.concat([new_data,newrow])
 # Plotting predicted values for the new data
+print(new_data)
+print(predictions_new)
 plt.figure(figsize=(12, 6))
-plt.plot(new_data.index, y_new_orig, label='Actual Prices', color='green')
-plt.plot(new_data.index, predictions_new, label='Predicted Prices', color='red')
+plt.plot(new_data.iloc[:-1].index, new_data[['Target']][:-1], label='Actual Prices', color='green')
+plt.plot(new_data.iloc[:-1].index, predictions_new, label='Predicted Prices', color='red')
+#plt.plot(new_data.tail(1).index, predictions_new[-1:], label='Future Prices', color='blue')
 plt.title('Actual vs Predicted Stock Prices for New Data')
 plt.xlabel('Date')
 plt.ylabel('Stock Prices')
